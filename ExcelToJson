@@ -1,0 +1,57 @@
+public static class ExcelToJson
+    {
+        #region SaveExcelSheet
+        internal static void SaveExcelSheet(HttpPostedFileBase fileBase, string excelPath)
+        {
+            if (fileBase.ContentLength > 0)
+            {
+                var fileName = Path.GetFileName(fileBase.FileName);
+                var fileCsv = Path.ChangeExtension(fileName, ".csv");
+                var path = Path.Combine(HostingEnvironment.MapPath(excelPath), fileCsv);
+                fileBase.SaveAs(path);
+            }
+        }
+        #endregion
+
+        internal static string ConversionExcelToJson(HttpPostedFileBase fileBase, string excelPath, string csvPath)
+        {
+            ExcelToCsv(fileBase, excelPath);
+            return CsvToJson(csvPath);            
+        }
+
+        #region ExcelToCsv
+        internal static List<CsvData> ExcelToCsv(HttpPostedFileBase fileBase, string excelPath)
+        {
+            var listOfObjects = new List<CsvData>();
+            var workbook = new Spire.Xls.Workbook();
+            string[] fileName = Directory.GetFiles(HostingEnvironment.MapPath(excelPath));
+            foreach (var file in fileName)
+            {
+                workbook.LoadFromFile(file);
+                var sheet = workbook.Worksheets[0];
+                sheet.SaveToFile(file, " ", Encoding.UTF8);
+                listOfObjects = File.ReadLines(file).Select(line => new CsvData(line)).ToList();
+            }
+            return listOfObjects;
+            
+        }
+        #endregion
+
+        #region CsvToJson
+        internal static string CsvToJson(string csvPath)
+        {
+            string response = "";
+            foreach (var file in Directory.EnumerateFiles(HostingEnvironment.MapPath(csvPath), "*.csv"))
+            {
+                var csvData = File.ReadAllText(file);
+                var data = (from row in csvData.Split('\n')
+                        select row.Split(',')).ToList();
+                response = JsonConvert.SerializeObject(data);
+                return response;
+            }
+            return response;
+        }
+        #endregion
+
+
+    }
