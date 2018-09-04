@@ -1,0 +1,10 @@
+ public class CsvData
+    {
+        public CsvData(string line)
+        {
+            var split = line.Split(',').Select(s => s.Replace("\"", "")).ToArray();
+            Lines = split[0];
+        }
+        
+        public string Lines { get; set; }
+    }
